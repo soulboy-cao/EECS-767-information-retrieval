@@ -10,7 +10,7 @@ def get_domain_name(url):
         return ''
 
 
-# Get sub domain name (name.example.com)
+# Get the sub domain name (name.example.com)
 def get_sub_domain_name(url):
     try:
         return urlparse(url).netloc

@@ -23,7 +23,7 @@ class Spider:
         self.boot()
         self.crawl_page('First spider', Spider.base_url)
 
-    # Creates directory and files for project on first run and starts the spider
+    # Creates directory nd files for project on first run and starts the spider
     @staticmethod
     def boot():
         create_project_dir(Spider.project_name)

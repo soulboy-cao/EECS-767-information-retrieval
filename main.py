@@ -1,50 +1,45 @@
-import threading
-from queue import Queue
-from spider import Spider
-from domain import *
-from general import *
-
-PROJECT_NAME = 'viper-seo'
-HOMEPAGE = 'http://viper-seo.com/'
-DOMAIN_NAME = get_domain_name(HOMEPAGE)
-QUEUE_FILE = PROJECT_NAME + '/queue.txt'
-CRAWLED_FILE = PROJECT_NAME + '/crawled.txt'
-NUMBER_OF_THREADS = 8
-queue = Queue()
-Spider(PROJECT_NAME, HOMEPAGE, DOMAIN_NAME)
+from processing import processing
+from indexing import indexing
+from vs_model import vs_model_pre
+from download_html import download_html
+import pickle
+import os
+import time
 
 
-# Create worker threads (will die when main exits)
-def create_workers():
-    for _ in range(NUMBER_OF_THREADS):
-        t = threading.Thread(target=work)
-        t.daemon = True
-        t.start()
+def get_url_dic():
+    with open("url_dic.dat", 'rb') as f:
+        url_dic = pickle.load(f)
+    return url_dic
 
 
-# Do the next job in the queue
-def work():
-    while True:
-        url = queue.get()
-        Spider.crawl_page(threading.current_thread().name, url)
-        queue.task_done()
+processed_dir = "../processed_data/"
+isExists = os.path.exists(processed_dir)
+if not isExists:
+    os.makedirs(processed_dir)
+
+origin_dir = "../webpages/"
+isExists = os.path.exists(origin_dir)
+if not isExists:
+    os.makedirs(origin_dir)
+    
+file_path = "../doc_ku/crawled.txt"
+
+download_html(file_path,origin_dir)
+print("Download html finished.")
 
 
-# Each queued link is a new job
-def create_jobs():
-    for link in file_to_set(QUEUE_FILE):
-        queue.put(link)
-    queue.join()
-    crawl()
-
-
-# Check if there are items in the queue, if so crawl them
-def crawl():
-    queued_links = file_to_set(QUEUE_FILE)
-    if len(queued_links) > 0:
-        print(str(len(queued_links)) + ' links in the queue')
-        create_jobs()
-
-
-create_workers()
-crawl()
+url_dic = get_url_dic()
+file_num = len(url_dic)
+processing(origin_dir, processed_dir)
+print("Finish processing html files.")
+start = time.time()
+indexing(url_dic, processed_dir)
+end = time.time()
+print("Finish indexing.")
+print(end-start)
+start = time.time()
+vs_model_pre(file_num)
+end = time.time()
+print(end-start)
+print("Finish vs model preparation.")
